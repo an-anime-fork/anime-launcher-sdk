@@ -23,11 +23,17 @@ pub use games::pgr;
 #[cfg(feature = "wuwa")]
 pub use games::wuwa;
 
+#[cfg(feature = "integrations")]
+pub mod integrations;
+
 #[cfg(feature = "config")]
 pub mod config;
 
 #[cfg(feature = "components")]
 pub mod components;
+
+#[cfg(feature = "discord-rpc")]
+pub mod discord_rpc;
 
 #[cfg(feature = "sessions")]
 pub mod sessions;
