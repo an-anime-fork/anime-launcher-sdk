@@ -46,7 +46,7 @@ pub fn launcher_dir() -> anyhow::Result<PathBuf> {
 }
 
 /// Get launcher's cache dir path
-///
+/// 
 /// If `CACHE_FOLDER` variable is set, then its value will be returned. Otherwise return `$HOME/.cache/anime-game-launcher`
 pub fn cache_dir() -> anyhow::Result<PathBuf> {
     if let Ok(folder) = std::env::var("CACHE_FOLDER") {
