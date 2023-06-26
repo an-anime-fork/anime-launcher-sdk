@@ -5,6 +5,15 @@ use crate::anime_game_core::traits::git_sync::RemoteGitSyncExt;
 use super::wine;
 use super::dxvk;
 
+use crate::integrations::steam;
+
+pub fn get_local_proton_versions(index: &Path) -> anyhow::Result<Vec<wine::Group>> {
+    match steam::get_proton_installs_as_wines() {
+        Ok(winegroups) => Ok(winegroups),
+        Err(_) => get_wine_versions(index)
+    }
+}
+
 /// Try to get wine versions from components index
 #[tracing::instrument(level = "debug")]
 #[cached::proc_macro::cached(key = "PathBuf", convert = r##"{ index.to_path_buf() }"##, result)]
@@ -50,6 +59,7 @@ pub fn get_wine_versions(index: &Path) -> anyhow::Result<Vec<wine::Group>> {
                                     uri: version["uri"].as_str().unwrap().to_string(),
                                     format: version["format"].as_str().map(|str| str.to_string()),
                                     files: serde_json::from_value::<wine::Files>(version["files"].to_owned())?,
+                                    managed: false,
                                     features: version.get("features").map(|v| v.into())
                                 });
                             }
@@ -62,6 +72,7 @@ pub fn get_wine_versions(index: &Path) -> anyhow::Result<Vec<wine::Group>> {
                         name,
                         title,
                         features: group.get("features").map(|v| v.into()),
+                        managed: false,
                         versions: wine_versions
                     });
                 }
@@ -171,7 +182,11 @@ impl ComponentsLoader {
     #[tracing::instrument(level = "debug")]
     /// Try to get wine versions from components index
     pub fn get_wine_versions(&self) -> anyhow::Result<Vec<wine::Group>> {
-        get_wine_versions(&self.folder)
+        // TODO: seems like the right spot to hijack the versions and inject the steam environment.
+        match steam::launched_from() {
+            steam::LaunchedFrom::Steam => get_local_proton_versions(&self.folder),
+            steam::LaunchedFrom::Independent => get_wine_versions(&self.folder)
+        }
     }
 
     #[inline]

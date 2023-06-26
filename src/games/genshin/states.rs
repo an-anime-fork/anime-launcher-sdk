@@ -68,9 +68,14 @@ pub struct LauncherStateParams<F: Fn(StateUpdating)> {
 impl LauncherState {
     pub fn get<F: Fn(StateUpdating)>(params: LauncherStateParams<F>) -> anyhow::Result<Self> {
         tracing::debug!("Trying to get launcher state");
+        let mut managed = false;
+        let config = Config::get()?;
 
+        if let Some(wine) = config.get_selected_wine()? {
+            managed = wine.managed;
+        }
         // Check prefix existence
-        if !params.wine_prefix.join("drive_c").exists() {
+        if !params.wine_prefix.join("drive_c").exists() && !managed {
             return Ok(Self::PrefixNotExists);
         }
 
@@ -125,7 +130,7 @@ impl LauncherState {
                         true
                     });
 
-                if !disabled {
+                if !disabled && params.use_patch {
                     return Ok(Self::TelemetryNotDisabled);
                 }
 
@@ -158,8 +163,18 @@ impl LauncherState {
 
         match &config.game.wine.selected {
             #[cfg(feature = "components")]
-            Some(selected) if !config.game.wine.builds.join(selected).exists() => return Ok(Self::WineNotInstalled),
-
+            Some(selected) => {
+                if !config.game.wine.builds.join(selected).exists() {
+                    match config.get_selected_wine()? {
+                        Some(selected) => {
+                            if !selected.managed {
+                                return Ok(Self::WineNotInstalled);
+                            }
+                        },
+                        None => {}
+                    }
+                }
+            }
             None => return Ok(Self::WineNotInstalled),
 
             _ => ()
