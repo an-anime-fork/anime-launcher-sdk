@@ -1,4 +1,7 @@
 use std::path::PathBuf;
+use crate::integrations::steam;
+
+use crate::games::common;
 
 pub const FOLDER_NAME: &str = "honkers-railway-launcher";
 
@@ -10,6 +13,14 @@ lazy_static::lazy_static! {
         .ok()
         .and_then(|limit| limit.parse::<usize>().ok())
         .unwrap_or(8 * 1024 * 1024); // 8 MiB
+}
+
+/// Get assumed Steam Prefix install path
+///
+/// Generate a sane, possible, "relative to the prefix's C:\ root" install target for games that
+///  need such a location to install the game(s) in.
+pub fn base_game_install_dir() -> anyhow::Result<PathBuf> {
+    common::base_install_dir(launcher_dir().unwrap())
 }
 
 /// Get default launcher dir path
