@@ -6,6 +6,9 @@ use serde_json::Value as JsonValue;
 use anime_game_core::genshin::consts::GameEdition;
 
 use crate::genshin::consts::launcher_dir;
+use crate::integrations::steam;
+
+use crate::genshin::consts::base_game_install_dir;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Paths {
@@ -24,13 +27,24 @@ impl Paths {
     }
 }
 
+fn concat_gen_shin() -> String {
+    format!("{}{}{} {}{}","Ge", "nshi", "n", "Imp", "act")
+}
+
+fn concat_gen_shin_game() -> String {
+    format!("{} {}", concat_gen_shin(), "game")
+}
+
 impl Default for Paths {
     fn default() -> Self {
-        let launcher_dir = launcher_dir().expect("Failed to get launcher dir");
+        let launcher_dir = base_game_install_dir().expect("Failed to get launcher dir");
 
         Self {
-            global: launcher_dir.join(concat!("Ge", "nshi", "n Imp", "act")),
-            china: launcher_dir.join(concat!("Yu", "anS", "hen"))
+            global: match steam::launched_from() {
+                steam::LaunchedFrom::Independent => launcher_dir.join(concat_gen_shin()),
+                steam::LaunchedFrom::Steam => launcher_dir.join(concat_gen_shin()).join(concat_gen_shin_game()),
+            },
+            china: launcher_dir.join(concat!("Yu", "anS", "hen")) // TODO: autogen Steam
         }
     }
 }
