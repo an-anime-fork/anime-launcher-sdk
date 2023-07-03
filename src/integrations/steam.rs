@@ -81,6 +81,15 @@ pub fn default_window_size_height(default: i32) -> i32 {
     }
 }
 
+pub fn get_steam_compatdata_cdrive_root() -> Option<String> {
+    match get_steam_compat_path() {
+        None => None,
+        Some(compat_path) => {
+            Some(format!("{compat_path}/pfx/drive_c"))
+        }
+    }
+}
+
 /// Generate a list of Steam-inventoried search roots.
 fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
     // initialize and let Steam seed itself.
@@ -91,7 +100,9 @@ fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
                 .into_iter()
                 .map(|single_path| single_path.join("common"))
                 .chain(
-                    [steam_install_dir.path.clone().join("compatibilitytools.d")].to_vec().into_iter()
+                    [steam_install_dir.path.clone().join("compatibilitytools.d")]
+                        .to_vec()
+                        .into_iter()
                 )
                 .collect::<Vec<PathBuf>>()
             )
@@ -173,6 +184,13 @@ fn get_split_names(path: PathBuf) -> (Option<String>, Option<String>) {
     }
 }
 
+fn get_steam_compat_path() -> Option<String> {
+    match env::var("STEAM_COMPAT_DATA_PATH") {
+        Ok(env_var) => Some(env_var),
+        Err(_) => None
+    }
+}
+
 /// Generate a list of WinCompatLib Structs for inventoried Steam-managed, detected Proton installs
 pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Group>> {
     match filter_local_roots_by_proton_launcher() {
@@ -181,7 +199,7 @@ pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Gr
                 bundle: Some(components::wine::Bundle::Proton),
                 compact_launch: true,
                 command: Some(String::from("python3 '%build%/proton' waitforexitandrun")),
-                managed_prefix: match env::var_os("STEAM_COMPAT_DATA_PATH") {
+                managed_prefix: match get_steam_compat_path() {
                     Some(val) => Some(PathBuf::from(val)),
                     None => None
                 },
