@@ -1,5 +1,6 @@
 use steamlocate::*;
 use std::env;
+use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
 use crate::components;
@@ -30,6 +31,30 @@ pub fn environment() -> Steam {
             false => Steam::Desktop
         },
         false => Steam::Invalid
+    }
+}
+
+
+pub fn aagl_launcher_launch_dir() -> Option<std::io::Result<PathBuf>> {
+    match launched_from() {
+        LaunchedFrom::Steam => Some(env::current_dir()),
+        LaunchedFrom::Independent => None
+    }
+}
+
+pub fn aagl_launcher_launch_target() -> Option<OsString> {
+    match launched_from() {
+        LaunchedFrom::Steam => {
+            match std::env::args().any(|arg| arg.starts_with("--launch-command")) {
+                false => None,
+                true => Some(env::args()
+                            .filter(|arg| arg.starts_with("--launch-command="))
+                            .collect::<Vec<String>>()[0]
+                            .split("=")
+                            .collect::<Vec<&str>>()[1].into())
+            }
+        },
+        LaunchedFrom::Independent => None
     }
 }
 
