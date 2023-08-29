@@ -40,7 +40,8 @@ pub struct Game {
     pub dxvk: Dxvk,
     pub enhancements: Enhancements,
     pub environment: HashMap<String, String>,
-    pub command: Option<String>
+    pub command: Option<String>,
+    pub telemetry_ignored: bool
 }
 
 impl Default for Game {
@@ -55,7 +56,8 @@ impl Default for Game {
             dxvk: Dxvk::default(),
             enhancements: Enhancements::default(),
             environment: HashMap::new(),
-            command: None
+            command: None,
+            telemetry_ignored: false
         }
     }
 }
@@ -129,7 +131,11 @@ impl From<&JsonValue> for Game {
                     }
                 },
                 None => default.command
-            }
+            },
+
+            telemetry_ignored: value.get("telemetry_ignored")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(default.telemetry_ignored)
         }
     }
 }

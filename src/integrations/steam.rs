@@ -73,7 +73,7 @@ fn check_env_var_for_val(env_var_key: &str, expected_value: &str) -> bool {
 }
 
 /// Identify whether we were launched through a Steam environment.
-fn launched_from_steam() -> bool {
+pub fn launched_from_steam() -> bool {
     check_env_var_for_val("SteamEnv", "1")
 }
 
@@ -104,6 +104,16 @@ pub fn default_window_size_height(default: i32) -> i32 {
         true => 800,
         false => default
     }
+}
+
+pub fn valid_selected_runner(selected: &String) -> bool {
+    for proton in &get_proton_installs_as_wines().unwrap()[0].versions {
+        if selected.eq(&proton.name) {
+            return true
+        }
+    }
+    tracing::error!("SELECTED RUNNER INVALID :: {}", selected);
+    false
 }
 
 pub fn get_steam_compatdata_cdrive_root() -> Option<String> {

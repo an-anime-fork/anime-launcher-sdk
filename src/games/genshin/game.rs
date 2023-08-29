@@ -70,7 +70,7 @@ pub fn run() -> anyhow::Result<()> {
 
     let mut folders = Folders {
         wine: wine.get_runner_dir(config.game.wine.builds.clone()),
-        prefix: config.game.wine.prefix.clone(),
+        prefix: wine.get_prefix_dir(config.game.wine.prefix.clone()),
         game: config
             .game
             .path
@@ -84,10 +84,10 @@ pub fn run() -> anyhow::Result<()> {
     tracing::info!("Checking telemetry");
 
     if let Ok(Some(server)) = telemetry::is_disabled(config.launcher.edition) {
-        if config.patch.apply {
-            return Err(anyhow::anyhow!("Telemetry server is not disabled: {server}"));
+        if config.game.telemetry_ignored {
+            tracing::warn!("Telemetry server \"{server}\" is not disabled but launcher is set to permissive.");
         } else {
-            tracing::warn!("Telemetry server is not disabled ({server}) but patch is disabled.");
+            return Err(anyhow::anyhow!("Telemetry server is not disabled: {server}"));
         }
     }
 
