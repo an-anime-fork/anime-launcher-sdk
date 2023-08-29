@@ -168,6 +168,19 @@ impl Version {
         return builds_dir.into().join(&self.name);
     }
 
+    pub fn get_prefix_dir<T: Into<PathBuf>>(&self, prefix_dir: T) -> PathBuf {
+        match self.managed {
+            true => match self.features.as_ref() {
+                Some(feats) => match feats.managed_prefix.as_ref() {
+                    Some(prefix) => prefix.join("pfx").into(),
+                    None => prefix_dir.into()
+                },
+                None => prefix_dir.into()
+            },
+            false => prefix_dir.into()
+        }
+    }
+
     /// Get latest recommended wine version
     pub fn latest<T: Into<PathBuf>>(components: T) -> anyhow::Result<Self> {
         Ok(get_groups(components)?[0].versions[0].clone())
