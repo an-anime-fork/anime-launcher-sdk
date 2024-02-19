@@ -34,6 +34,19 @@ pub fn environment() -> Steam {
     }
 }
 
+pub fn is_install_managed_by_steam() -> bool {
+    match steam_managed_installed_game() {
+        Some(_) => true,
+        None => false
+    }
+}
+
+pub fn steam_managed_installed_game() -> Option<String> {
+    match std::env::var("STEAM_COMPAT_INSTALL_PATH") {
+        Ok(val) => Some(val.clone()), // We're handling a pure Steam install. Neat.
+        Err(_) => None
+    }
+}
 
 pub fn aagl_launcher_launch_dir() -> Option<std::io::Result<PathBuf>> {
     match launched_from() {
@@ -232,7 +245,7 @@ pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Gr
         Some(paths) => {
             let proton_features = components::wine::Features {
                 bundle: Some(components::wine::Bundle::Proton),
-                compact_launch: true,
+                compact_launch: false,
                 command: Some(String::from("python3 '%build%/proton' waitforexitandrun")),
                 managed_prefix: match get_steam_compat_path() {
                     Some(val) => Some(PathBuf::from(val)),
