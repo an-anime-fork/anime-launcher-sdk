@@ -2,9 +2,12 @@ use std::path::PathBuf;
 
 use anime_game_core::prelude::*;
 use anime_game_core::honkai::prelude::*;
+use serde::de::Unexpected::Str;
 
 use crate::config::ConfigExt;
 use crate::honkai::config::Config;
+use crate::integrations::steam;
+use crate::integrations::steam::LaunchedFrom;
 
 #[derive(Debug, Clone)]
 pub enum LauncherState {
@@ -49,15 +52,21 @@ pub struct LauncherStateParams<F: Fn(StateUpdating)> {
 
     pub patch_folder: PathBuf,
 
-    pub status_updater: F
+    pub status_updater: F,
+    pub telemetry_ignored: bool
 }
 
 impl LauncherState {
     pub fn get<F: Fn(StateUpdating)>(params: LauncherStateParams<F>) -> anyhow::Result<Self> {
         tracing::debug!("Trying to get launcher state");
+        let mut managed = false;
+        let config = Config::get()?;
 
+        if let Some(wine) = config.get_selected_wine()? {
+            managed = wine.managed;
+        }
         // Check prefix existence
-        if !params.wine_prefix.join("drive_c").exists() {
+        if !params.wine_prefix.join("drive_c").exists() && !managed {
             return Ok(Self::PrefixNotExists);
         }
 
@@ -121,7 +130,7 @@ impl LauncherState {
                         true
                     });
 
-                if !disabled {
+                if !disabled && !params.telemetry_ignored{
                     return Ok(Self::TelemetryNotDisabled);
                 }
 
@@ -146,13 +155,44 @@ impl LauncherState {
 
         let config = Config::get()?;
 
-        match &config.game.wine.selected {
-            #[cfg(feature = "components")]
-            Some(selected) if !config.game.wine.builds.join(selected).exists() => return Ok(Self::WineNotInstalled),
+        // early check
+        match config.get_selected_wine()? {
+            Some(selected) => {
+                if selected.managed {
+                    tracing::debug!(
+                        "DEBUG: runner dir {:?} :: managed somehow",
+                        selected.get_runner_dir(config.game.wine.builds.clone())
+                    );
+                }
+            }
+            None => {
+                // noop
+            }
+        }
 
-            None => return Ok(Self::WineNotInstalled),
-
-            _ => ()
+        match steam::launched_from() {
+            LaunchedFrom::Steam => {
+                match &config.game.wine.selected {
+                    #[cfg(feature = "components")]
+                    Some(selected) if !steam::valid_selected_runner(selected)
+                        => return Ok(Self::WineNotInstalled),
+                    None
+                        => return Ok(Self::WineNotInstalled),
+                    _
+                    => ()
+                }
+            },
+            LaunchedFrom::Independent => {
+                match &config.game.wine.selected {
+                    #[cfg(feature = "components")]
+                    Some(selected) if !config.game.wine.builds.join(selected).exists()
+                        => return Ok(Self::WineNotInstalled),
+                    None
+                        => return Ok(Self::WineNotInstalled),
+                    _
+                        => ()
+                }
+            }
         }
 
         Self::get(LauncherStateParams {
@@ -162,6 +202,7 @@ impl LauncherState {
             game_edition: config.launcher.edition,
 
             patch_folder: config.patch.path,
+            telemetry_ignored: config.game.telemetry_ignored,
 
             status_updater
         })
