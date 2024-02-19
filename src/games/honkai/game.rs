@@ -65,8 +65,8 @@ pub fn run() -> anyhow::Result<()> {
     let features = wine.features(&config.components.path)?.unwrap_or_default();
 
     let mut folders = Folders {
-        wine: config.game.wine.builds.join(&wine.name),
-        prefix: config.game.wine.prefix.clone(),
+        wine: wine.get_runner_dir(config.game.wine.builds.clone()),
+        prefix: wine.get_prefix_dir(config.game.wine.prefix.clone()),
         game: game_path.clone(),
         patch: config.patch.path.clone(),
         temp: config.launcher.temp.clone().unwrap_or(std::env::temp_dir())
@@ -76,8 +76,12 @@ pub fn run() -> anyhow::Result<()> {
 
     tracing::info!("Checking telemetry");
 
-    if let Ok(Some(server)) = telemetry::is_disabled(config.launcher.edition) {
-        return Err(anyhow::anyhow!("Telemetry server is not disabled: {server}"));
+    if config.game.telemetry_ignored {
+        tracing::warn!("Telemetry state is ignored.");
+    } else {
+        if let Ok(Some(server)) = telemetry::is_disabled(config.launcher.edition) {
+            return Err(anyhow::anyhow!("Telemetry server is not disabled: {server}"));
+        }
     }
 
     // Prepare wine prefix drives
@@ -114,15 +118,22 @@ pub fn run() -> anyhow::Result<()> {
         windows_command += " ";
     }
 
-    windows_command += &format!("'{}/jadeite.exe' 'Z:\\{}/BH3.exe' -- ", folders.patch.to_string_lossy(), folders.game.to_string_lossy());
+    let mut patch_path_fixup = folders.patch.to_str().unwrap();
+    let mut game_path_fixup = folders.game.to_str().unwrap();
+
+    if patch_path_fixup.starts_with("/") {
+        patch_path_fixup = patch_path_fixup.split_at(1).1;
+    }
+    if game_path_fixup.starts_with("/") {
+        game_path_fixup = game_path_fixup.split_at(1).1;
+    }
+
+    windows_command += &format!(
+        "\"Z:\\{}\\jadeite.exe\" \"Z:\\{}\\BH3.exe\" -- ",  patch_path_fixup.replace('/', "\\"), game_path_fixup.replace('/', "\\")
+    );
 
     if config.game.wine.borderless {
         launch_args += "-screen-fullscreen 0 -popupwindow ";
-    }
-
-    // https://notabug.org/Krock/dawn/src/master/TWEAKS.md
-    if config.game.enhancements.fsr.enabled {
-        launch_args += "-window-mode exclusive ";
     }
 
     // gamescope <params> -- <command to run>
@@ -132,10 +143,12 @@ pub fn run() -> anyhow::Result<()> {
 
     // Bundle all windows arguments used to run the game into a single file
     if features.compact_launch {
-        std::fs::write(folders.game.join("compact_launch.bat"), format!("start {windows_command} {launch_args}\nexit"))?;
+        std::fs::write(folders.game.join("compact_launch.bat"), format!("{windows_command} {launch_args}\nexit"))?;
 
         windows_command = String::from("compact_launch.bat");
         launch_args = String::new();
+    } else {
+        tracing::info!("Compact launch disabled.");
     }
 
     // bwrap <params> -- <command to run>

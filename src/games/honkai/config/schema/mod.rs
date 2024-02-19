@@ -110,17 +110,18 @@ impl Schema {
     /// - For general wine build returns `game.wine.prefix`
     /// - For proton-like builds return `game.wine.prefix`/`pfx`
     pub fn get_wine_prefix_path(&self) -> PathBuf {
-        if let Ok(Some(wine)) = self.get_selected_wine() {
-            let wine = wine
-                .to_wine(&self.components.path, Some(&self.game.wine.builds.join(&wine.name)))
-                .with_prefix(&self.game.wine.prefix);
-
-            let prefix = match wine {
-                UnifiedWine::Default(wine) => wine.prefix,
-                UnifiedWine::Proton(proton) => proton.wine().prefix.clone()
-            };
-
-            return prefix;
+        match self.get_selected_wine().expect("No wine?") {
+            Some(wine) => {
+                let wine = wine
+                    .to_wine(&self.components.path, Some(&self.game.wine.builds.join(&wine.name)))
+                    .with_prefix(&self.game.wine.prefix);
+                let prefix = match wine {
+                    UnifiedWine::Default(wine) => wine.prefix,
+                    UnifiedWine::Proton(proton) => proton.wine().prefix.clone()
+                };
+                return prefix;
+            },
+            None => {}
         }
 
         self.game.wine.prefix.clone()
