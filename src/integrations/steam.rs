@@ -42,7 +42,7 @@ pub fn is_install_managed_by_steam() -> bool {
 }
 
 pub fn steam_managed_installed_game() -> Option<String> {
-    match std::env::var("STEAM_COMPAT_INSTALL_PATH") {
+    match std::env::var("STEAM_COMPAT_CLIENT_INSTALL_PATH") {
         Ok(val) => Some(val.clone()), // We're handling a pure Steam install. Neat.
         Err(_) => None
     }
