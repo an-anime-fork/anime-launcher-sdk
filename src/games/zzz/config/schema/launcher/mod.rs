@@ -72,9 +72,6 @@ impl Default for Launcher {
             temp: launcher_dir().ok(),
             repairer: Repairer::default(),
 
-            #[cfg(feature = "discord-rpc")]
-            discord_rpc: DiscordRpc::default(),
-
             #[cfg(feature = "environment-emulation")]
             environment: Environment::default(),
 
