@@ -5,10 +5,18 @@ use anime_game_core::wuwa::prelude::*;
 
 use crate::config::ConfigExt;
 
+/**
+ * TODO: Review this whole spec and do away with version checks and update checks.
+ * This class needs to get Jadeite ripped out of it to be used as an intermediate
+ * launcher for Wuthering Waves on Steam. Upstream install data is to be trusted
+ * automatically
+ **/
+
 #[derive(Debug, Clone)]
 pub enum LauncherState {
     Launch,
 
+    /*
     PatchNotVerified,
     PatchBroken,
     PatchUnsafe,
@@ -16,26 +24,28 @@ pub enum LauncherState {
 
     PatchNotInstalled,
     PatchUpdateAvailable,
+    */
 
+    // Todo: yeet this and replace with Proton select
     #[cfg(feature = "components")]
     WineNotInstalled,
 
     PrefixNotExists,
 
-    TelemetryNotDisabled,
+    //TelemetryNotDisabled,
 
     // Always contains `VersionDiff::Diff`
-    GameUpdateAvailable(VersionDiff),
+    // GameUpdateAvailable(VersionDiff),
 
     /// Always contains `VersionDiff::NotInstalled`
-    GameNotInstalled(VersionDiff)
+    // GameNotInstalled(VersionDiff)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StateUpdating {
     Components,
     Game,
-    Patch
+    //Patch
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,7 +54,7 @@ pub struct LauncherStateParams<F: Fn(StateUpdating)> {
     pub game_edition: GameEdition,
 
     pub wine_prefix: PathBuf,
-    pub patch_folder: PathBuf,
+    //pub patch_folder: PathBuf,
 
     pub fast_verify: bool,
     pub status_updater: F
@@ -62,6 +72,7 @@ impl LauncherState {
             return Ok(Self::PrefixNotExists);
         }
 
+        /*
         // Check game patch status
         (params.status_updater)(StateUpdating::Patch);
 
@@ -94,13 +105,14 @@ impl LauncherState {
         if !disabled {
             return Ok(Self::TelemetryNotDisabled);
         }
-
+        */
         // Check game installation status
         (params.status_updater)(StateUpdating::Game);
 
         let game = Game::new(&params.game_path, params.game_edition)
             .with_fast_verify(params.fast_verify);
 
+        /*
         let diff = game.try_get_diff()?;
 
         match diff {
@@ -121,6 +133,7 @@ impl LauncherState {
             VersionDiff::Outdated { .. } => Ok(Self::GameUpdateAvailable(diff)),
             VersionDiff::NotInstalled { .. } => Ok(Self::GameNotInstalled(diff))
         }
+        */
     }
 
     #[cfg(feature = "config")]
