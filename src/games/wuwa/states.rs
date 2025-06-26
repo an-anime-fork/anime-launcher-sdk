@@ -159,7 +159,7 @@ impl LauncherState {
             game_edition: config.launcher.edition,
 
             wine_prefix: config.get_wine_prefix_path(),
-            patch_folder: config.patch.path,
+            //patch_folder: config.patch.path,
 
             fast_verify: config.launcher.repairer.fast,
 

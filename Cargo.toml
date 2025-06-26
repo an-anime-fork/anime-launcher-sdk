@@ -11,6 +11,7 @@ publish = false
 [dependencies.anime-game-core]
 git = "https://github.com/an-anime-fork/anime-game-core"
 branch = "cybik-main"
+workspace = true
 features = ["all"]
 
 # path = "../anime-game-core" # ! for dev purposes only
