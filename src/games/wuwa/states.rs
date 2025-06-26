@@ -111,9 +111,9 @@ impl LauncherState {
 
         let game = Game::new(&params.game_path, params.game_edition)
             .with_fast_verify(params.fast_verify);
-        
+
         // TODO: wine selection check?
-        Ok(Self::Launch);
+        return Ok(Self::Launch);
 
         /*
         let diff = game.try_get_diff()?;
