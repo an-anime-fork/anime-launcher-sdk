@@ -37,7 +37,7 @@ pub enum LauncherState {
     // Always contains `VersionDiff::Diff`
     // GameUpdateAvailable(VersionDiff),
 
-    /// Always contains `VersionDiff::NotInstalled`
+    // Always contains `VersionDiff::NotInstalled`
     // GameNotInstalled(VersionDiff)
 }
 
