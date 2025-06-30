@@ -116,9 +116,9 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     // https://notabug.org/Krock/dawn/src/master/TWEAKS.md
-    if config.game.enhancements.fsr.enabled {
+    /*if config.game.enhancements.fsr.enabled {
         launch_args += "-window-mode exclusive ";
-    }
+    }*/
 
     // gamescope <params> -- <command to run>
     if let Some(gamescope) = config.game.enhancements.gamescope.get_command() {
@@ -218,7 +218,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     command.envs(config.game.enhancements.hud.get_env_vars(config.game.enhancements.gamescope.enabled));
-    command.envs(config.game.enhancements.fsr.get_env_vars());
+    //command.envs(config.game.enhancements.fsr.get_env_vars());
 
     command.envs(config.game.wine.sync.get_env_vars());
     command.envs(config.game.wine.language.get_env_vars());
