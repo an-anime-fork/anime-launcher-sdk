@@ -5,11 +5,11 @@ use crate::config::schema_blanks::prelude::*;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Enhancements {
-    pub fsr: Fsr,
+    //pub fsr: Fsr,
     pub gamemode: bool,
     pub hud: HUD,
     pub gamescope: Gamescope,
-    pub dx11: bool,
+    pub dx11: bool, // choice?
     pub fix_launch_dialog: bool
 }
 
@@ -18,9 +18,11 @@ impl From<&JsonValue> for Enhancements {
         let default = Self::default();
 
         Self {
+            /*
             fsr: value.get("fsr")
                 .map(Fsr::from)
                 .unwrap_or(default.fsr),
+            */
 
             gamemode: value.get("gamemode")
                 .and_then(JsonValue::as_bool)
