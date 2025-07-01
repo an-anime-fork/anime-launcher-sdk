@@ -1,6 +1,8 @@
+use std::env::VarError;
 use std::path::PathBuf;
+use microxdg::{Xdg, XdgError};
 
-pub const FOLDER_NAME: &str = "wavey-launcher";
+pub const FOLDER_NAME: &str = "moe.cybik.pretty-waves";
 
 lazy_static::lazy_static! {
     // Limit max amount of log data in a file
@@ -12,9 +14,13 @@ lazy_static::lazy_static! {
         .unwrap_or(8 * 1024 * 1024); // 8 MiB
 }
 
+fn get_data_home() -> PathBuf {
+    return Xdg::new().unwrap().data().unwrap();
+}
+
 /// Get default launcher dir path
 ///
-/// If `LAUNCHER_FOLDER` variable is set, then its value will be returned. Otherwise return `$HOME/.local/share/wavey-launcher`
+/// If `LAUNCHER_FOLDER` variable is set, then its value will be returned. Otherwise return `$HOME/.local/share/moe.cybik.pretty-waves`
 pub fn launcher_dir() -> anyhow::Result<PathBuf> {
     if let Ok(folder) = std::env::var("LAUNCHER_FOLDER") {
         return Ok(folder.into());
