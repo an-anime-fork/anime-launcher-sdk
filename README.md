@@ -1,6 +1,6 @@
 # 🦀 Anime Launcher SDK
 
-SDK based on [anime-game-core](https://github.com/an-anime-team/anime-game-core) with some basic instruments like launcher state system and configuration file manager, written in Rust
+SDK based on [anime-game-core](https://github.com/an-anime-fork/anime-game-core) with some basic instruments like launcher state system and configuration file manager, written in Rust
 
 > ⚠️ Current implementation is considered legacy. No deep changes will be made.
 
@@ -26,9 +26,9 @@ SDK based on [anime-game-core](https://github.com/an-anime-team/anime-game-core)
 
 | Name                                                                             | Feature                   |
 |----------------------------------------------------------------------------------|---------------------------|
-| [An Anime Game](https://github.com/an-anime-team/an-anime-game-launcher)         | `gen-shin` (without dash) |
-| [Honkers Railway](https://github.com/an-anime-team/the-honkers-railway-launcher) | `star-rail`               |
-| [Sleepy](https://github.com/an-anime-team/sleepy-launcher)                       | `zzz`                     |
-| [Honkers](https://github.com/an-anime-team/honkers-launcher)                     | `hon-kai` (without dash)  |
-| [An Anime Borb](https://github.com/an-anime-team/an-anime-borb-launcher)         | `pgr`                     |
-| [Waves](https://github.com/an-anime-team/wavey-launcher)                         | `wuwa`                    |
+| [An Anime Game](https://github.com/an-anime-fork/an-anime-game-launcher)         | `gen-shin` (without dash) |
+| [Honkers Railway](https://github.com/an-anime-fork/the-honkers-railway-launcher) | `star-rail`               |
+| [Sleepy](https://github.com/an-anime-fork/sleepy-launcher)                       | `zzz`                     |
+| [Honkers](https://github.com/an-anime-fork/honkers-launcher)                     | `hon-kai` (without dash)  |
+| [An Anime Borb](https://github.com/an-anime-fork/an-anime-borb-launcher)         | `pgr`                     |
+| [Waves](https://github.com/an-anime-fork/wavey-launcher)                         | `wuwa`                    |
