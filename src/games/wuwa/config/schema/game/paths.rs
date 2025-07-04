@@ -7,6 +7,9 @@ use anime_game_core::wuwa::consts::GameEdition;
 
 use crate::wuwa::consts::launcher_dir;
 
+use crate::integrations::steam;
+use crate::integrations::steam::LaunchedFrom;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Paths {
     pub global: PathBuf,
