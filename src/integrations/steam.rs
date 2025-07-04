@@ -41,6 +41,12 @@ pub fn is_install_managed_by_steam() -> bool {
     }
 }
 
+pub fn is_in_steam_startup_phase() -> bool {
+    let steam_launch = env::var("SteamClientLaunch");
+    let steam_user = env::var("SteamUser");
+    (steam_user.is_ok() && (steam_launch.is_err() || !(steam_launch.unwrap() == "1")))
+}
+
 pub fn steam_managed_installed_game() -> Option<String> {
     match std::env::var("STEAM_COMPAT_CLIENT_INSTALL_PATH") {
         Ok(val) => Some(val.clone()), // We're handling a pure Steam install. Neat.
@@ -142,20 +148,20 @@ pub fn get_steam_compatdata_cdrive_root() -> Option<String> {
 fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
     // initialize and let Steam seed itself.
     match SteamDir::locate() {
-        Some(mut steam_install_dir) => {
-            Some(steam_install_dir.libraryfolders().paths
+        Ok(mut steam_install_dir) => {
+            Some(steam_install_dir.library_paths().unwrap()
                 .clone()
                 .into_iter()
-                .map(|single_path| single_path.join("common"))
+                .map(|single_path| single_path.join("steamapps").join("common"))
                 .chain(
-                    [steam_install_dir.path.clone().join("compatibilitytools.d")]
+                    [steam_install_dir.path().clone().join("compatibilitytools.d")]
                         .to_vec()
                         .into_iter()
                 )
                 .collect::<Vec<PathBuf>>()
             )
         }
-        None => None
+        Err(_) => None
     }
 }
 
@@ -298,7 +304,7 @@ pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Gr
 
 /// Get a list of Proton paths to sleuth into.
 pub fn steam_proton_installed_paths() -> Option<Vec<PathBuf>> {
-    match !launched_from_steam() || SteamDir::locate().is_none() {
+    match !launched_from_steam() || SteamDir::locate().is_err() {
         true => None,
         false => filter_local_roots_by_proton_launcher()
     }
