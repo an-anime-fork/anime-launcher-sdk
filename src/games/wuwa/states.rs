@@ -4,6 +4,8 @@ use anime_game_core::prelude::*;
 use anime_game_core::wuwa::prelude::*;
 
 use crate::config::ConfigExt;
+use crate::integrations::steam;
+use crate::integrations::steam::LaunchedFrom;
 
 /**
  * TODO: Review this whole spec and do away with version checks and update checks.
@@ -145,17 +147,56 @@ impl LauncherState {
 
         let config = crate::wuwa::config::Config::get()?;
 
-        match &config.game.wine.selected {
+        //        match &config.game.wine.selected {
+        match config.get_selected_wine()? {
             #[cfg(feature = "components")]
-            Some(selected) if !config.game.wine.builds.join(selected).exists() => return Ok(Self::WineNotInstalled),
+            Some(selected) => {
+                if selected.managed {
+                    tracing::debug!(
+                        "DEBUG: runner dir {:?} :: managed somehow",
+                        selected.get_runner_dir(config.game.wine.builds.clone())
+                    );
+                }
+            },
+            None => {
+                // noop
+            }
+        }
 
-            None => return Ok(Self::WineNotInstalled),
-
-            _ => ()
+        match steam::launched_from() {
+            LaunchedFrom::Steam => {
+                match &config.game.wine.selected {
+                    #[cfg(feature = "components")]
+                    Some(selected) if !steam::valid_selected_runner(selected)
+                        => return Ok(Self::WineNotInstalled),
+                    None
+                        => return Ok(Self::WineNotInstalled),
+                    _
+                    => ()
+                }
+            },
+            LaunchedFrom::Independent => {
+                match &config.game.wine.selected {
+                    #[cfg(feature = "components")]
+                    Some(selected) if !config.game.wine.builds.join(selected).exists()
+                        => return Ok(Self::WineNotInstalled),
+                    None
+                        => return Ok(Self::WineNotInstalled),
+                    _
+                    => ()
+                }
+            }
+        }
+        let mut init_path = config.game.path.for_edition(config.launcher.edition).to_path_buf();
+        match steam::steam_managed_game_install_executable() {
+            None => (),
+            Some(executable ) => {
+                init_path = executable;
+            }
         }
 
         Self::get(LauncherStateParams {
-            game_path: config.game.path.for_edition(config.launcher.edition).to_path_buf(),
+            game_path: init_path,
             game_edition: config.launcher.edition,
 
             wine_prefix: config.get_wine_prefix_path(),

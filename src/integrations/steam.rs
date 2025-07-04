@@ -21,6 +21,14 @@ pub enum Steam {
     Invalid
 }
 
+#[derive(Debug, Clone)]
+pub struct Background {
+    pub uri: String,
+    pub hash: String
+}
+
+// Receive.
+
 pub fn environment() -> Steam {
     match launched_from_steam() {
         true => match is_steam_os() {
@@ -52,6 +60,20 @@ pub fn steam_managed_installed_game() -> Option<String> {
         Ok(val) => Some(val.clone()), // We're handling a pure Steam install. Neat.
         Err(_) => None
     }
+}
+
+pub fn steam_managed_game_install_executable() -> Option<PathBuf> {
+    let args = std::env::args().collect::<Vec<_>>();
+    for ( a ) in args {
+        tracing::debug!(
+            "Arg {:?}",
+            a.trim().to_string()
+        );
+        if ( a.ends_with(".exe") ) {
+            return Some(a.into());
+        }
+    }
+    None
 }
 
 pub fn aagl_launcher_launch_dir() -> Option<std::io::Result<PathBuf>> {
