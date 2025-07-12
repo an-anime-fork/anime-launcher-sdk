@@ -119,7 +119,7 @@ pub fn launched_from_steam() -> bool {
 }
 
 /// Identify whether we are running on Steam Deck.
-fn is_steam_deck() -> bool {
+pub fn is_steam_deck() -> bool {
     check_env_var_for_val("SteamDeck", "1")
 }
 
@@ -176,7 +176,7 @@ fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
                 .into_iter()
                 .map(|single_path| single_path.join("steamapps").join("common"))
                 .chain(
-                    [steam_install_dir.path().clone().join("compatibilitytools.d")]
+                    [steam_install_dir.path().join("compatibilitytools.d")]
                         .to_vec()
                         .into_iter()
                 )
