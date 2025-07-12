@@ -21,7 +21,8 @@ pub mod prelude {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ordinalize, Serialize, Deserialize)]
 pub enum LauncherStyle {
     Modern,
-    Classic
+    Classic,
+    SteamDeck
 }
 
 impl Default for LauncherStyle {
