@@ -138,9 +138,6 @@ pub fn run() -> anyhow::Result<()> {
     command.arg(&bash_command);
 
     // Setup environment
-    /*
-    command.env("WINEPREFIX", &folders.prefix);
-    */
     command.env("SteamOS", "1");
     command.env("WINEARCH", "win64");
 
