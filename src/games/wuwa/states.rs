@@ -70,9 +70,9 @@ impl LauncherState {
         (params.status_updater)(StateUpdating::Components);
 
         // Check prefix existence
-        if !params.wine_prefix.join("drive_c").exists() {
-            return Ok(Self::PrefixNotExists);
-        }
+        //if !params.wine_prefix.join("drive_c").exists() {
+        //    return Ok(Self::PrefixNotExists);
+        //}
 
         /*
         // Check game patch status

@@ -19,17 +19,15 @@ features = ["all"]
 anyhow = { version = "1.0", features = ["backtrace"] }
 tracing = "0.1"
 
-dirs = "5.0.0"
-
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 
-cached = { version = "0.53", features = ["proc_macro"] }
+cached = { version = "0.55.1", features = ["proc_macro"] }
 enum-ordinalize = { version = "4.3", optional = true }
 
 wincompatlib = { version = "0.7.7", features = ["all"], optional = true }
 lazy_static = { version = "1.5.0", optional = true }
-md-5 = { version = "0.10", features = ["asm"], optional = true }
+md-5 = { version = "0.10.6", features = ["asm"], optional = true }
 discord-rich-presence = { version = "0.2.3", optional = true }
 steamlocate = "2.0.1"
 microxdg = "0.2.0"
