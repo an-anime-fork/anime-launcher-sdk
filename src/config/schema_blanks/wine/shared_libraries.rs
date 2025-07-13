@@ -38,8 +38,8 @@ impl Default for SharedLibraries {
     #[inline]
     fn default() -> Self {
         Self {
-            wine: true,
-            gstreamer: true
+            wine: false,
+            gstreamer: false
         }
     }
 }
