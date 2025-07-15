@@ -10,6 +10,9 @@ pub struct Enhancements {
     pub hud: HUD,
     pub gamescope: Gamescope,
     pub dx11: bool, // choice?
+    pub xalia: bool, // Xalia glyphs
+    pub obs_vkcapture: bool, // OBS Vulkan capture layer
+    pub force_raytrace: bool, // GPU ID override for Ray Tracing
     pub fix_launch_dialog: bool
 }
 
@@ -35,6 +38,18 @@ impl From<&JsonValue> for Enhancements {
             gamescope: value.get("gamescope")
                 .map(Gamescope::from)
                 .unwrap_or(default.gamescope),
+
+            xalia: value.get("xalia")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(false),
+
+            obs_vkcapture: value.get("obs_vkcapture")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(true),
+
+            force_raytrace: value.get("force_raytrace")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(false),
 
             dx11: value.get("dx11")
                 .and_then(JsonValue::as_bool)

@@ -140,6 +140,19 @@ pub fn run() -> anyhow::Result<()> {
     // Setup environment
     command.env("SteamOS", "1");
     command.env("WINEARCH", "win64");
+    command.env("WINEDLLOVERRIDES", "KRSDKExternal.exe=d");
+    if config.game.enhancements.obs_vkcapture {
+        command.env("OBS_VKCAPTURE", "1");
+    }
+    if ! config.game.enhancements.xalia {
+        command.env("PROTON_USE_XALIA", "0");
+    }
+    if config.game.enhancements.force_raytrace {
+        command.env(
+            "DXVK_CONFIG",
+            "dxgi.customDeviceDesc=\"NVIDIA GeForce RTX 4090\";dxgi.customDeviceId=2684;dxgi.customVendorId=10de"
+        );
+    }
 
     // Add environment flags for selected wine
     for (key, value) in features.env.into_iter() {
