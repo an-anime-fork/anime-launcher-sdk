@@ -32,6 +32,9 @@ discord-rich-presence = { version = "0.2.3", optional = true }
 steamlocate = "2.0.1"
 microxdg = "0.2.0"
 
+# Steam integration, sdk level
+steamworks = "0.12.1"
+
 [features]
 genshin = ["anime-game-core/genshin", "anime-game-core/sophon"]
 star-rail = ["anime-game-core/star-rail"]
