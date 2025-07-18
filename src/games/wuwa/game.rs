@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::env;
 
 use anime_game_core::wuwa::telemetry;
 
@@ -137,16 +138,31 @@ pub fn run() -> anyhow::Result<()> {
     command.arg("-c");
     command.arg(&bash_command);
 
+    // Game ID per Steam. Just set it in.
+    for envvar in ["STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"].iter() {
+        command.env(envvar, "3513350");
+    }
+    // Env that just gets set to 1
+    for envvar in [
+        "STEAM_COMPAT_PROTON", // force indicate we're Proton
+        "SteamOS"              // Ask the game nicely
+    ].iter() {
+        command.env(envvar, "1");
+    }
+
     // Setup environment
-    command.env("SteamOS", "1");
     command.env("WINEARCH", "win64");
     command.env("WINEDLLOVERRIDES", "KRSDKExternal.exe=d");
+
+    // Vulkan accelerated capture layer
     if config.game.enhancements.obs_vkcapture {
         command.env("OBS_VKCAPTURE", "1");
     }
+    // Xalia Glyph library
     if ! config.game.enhancements.xalia {
         command.env("PROTON_USE_XALIA", "0");
     }
+    // Raytrace override
     if config.game.enhancements.force_raytrace {
         command.env(
             "DXVK_CONFIG",
