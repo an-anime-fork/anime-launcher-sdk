@@ -2,6 +2,8 @@ use std::env::VarError;
 use std::path::PathBuf;
 use microxdg::{Xdg, XdgError};
 
+use crate::games::common;
+
 pub const FOLDER_NAME: &str = "moe.cybik.pretty-waves";
 
 lazy_static::lazy_static! {

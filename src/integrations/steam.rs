@@ -3,6 +3,8 @@ use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
+
+use gfxinfo::active_gpu;
 use crate::components;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -49,6 +51,30 @@ pub fn is_install_managed_by_steam() -> bool {
     }
 }
 
+fn is_steam_deck_gpu( device_gpu: u32 ) -> bool {
+    if device_gpu == 0x1435 {
+        return true;
+    }
+    false
+}
+
+pub fn hwcheck_is_deck() -> bool {
+    match gfxinfo::active_gpu() {
+        Ok(gpu) => {
+            tracing::info!( "gpuinfo || family {} :: vendor {} :: model {} :: did {:x?}",
+                gpu.family(),
+                gpu.vendor(),
+                gpu.model(),
+                gpu.device_id() // 7550 is the ID for 9070 / 9070XT, which is good.
+            );
+            gpu.vendor() == "AMD" && *gpu.device_id() == 0x1435 // This is the combo for Steam Deck
+        }
+        Err(e) => {
+            false
+        }
+    }
+}
+
 pub fn is_in_steam_startup_phase() -> bool {
     let steam_launch = env::var("SteamClientLaunch");
     let steam_user = env::var("SteamUser");
@@ -64,12 +90,12 @@ pub fn steam_managed_installed_game() -> Option<String> {
 
 pub fn steam_managed_game_install_executable() -> Option<PathBuf> {
     let args = std::env::args().collect::<Vec<_>>();
-    for ( a ) in args {
+    for a in args {
         tracing::debug!(
             "Arg {:?}",
             a.trim().to_string()
         );
-        if ( a.ends_with(".exe") ) {
+        if a.ends_with(".exe") {
             return Some(a.into());
         }
     }

@@ -12,12 +12,15 @@ use crate::components::wine::Bundle as WineBundle;
 
 use crate::config::ConfigExt;
 use crate::wuwa::config::Config;
+use crate::games::common;
+use crate::wuwa::config::schema::game::Game;
 
 use crate::config::schema_blanks::prelude::{
     WineDrives,
     AllowedDrives
 };
 use crate::integrations::steam::steam_managed_game_install_executable;
+use crate::traits::integrations::steamgame::SteamGame;
 use crate::wuwa::consts;
 use crate::wuwa::states::LauncherStateParams;
 
@@ -37,6 +40,12 @@ fn replace_keywords(command: impl ToString, folders: &Folders) -> String {
         .replace("%temp%", folders.game.to_str().unwrap())
         .replace("%launcher%", &consts::launcher_dir().unwrap().to_string_lossy())
         .replace("%game%", folders.temp.to_str().unwrap())
+}
+
+#[cfg(feature = "steam")]
+impl SteamGame for Game {
+    const STEAM_GAME_ID: i32 = 3513350;
+    fn has_steam_game_entry(&self) -> bool { true }
 }
 
 /// Try to run the game
@@ -118,6 +127,8 @@ pub fn run() -> anyhow::Result<()> {
     // nahhhhhhhhhhh
     if config.game.enhancements.dx11 {
         launch_args += "-dx11 ";
+    } else {
+        launch_args += "-dx12 ";
     }
 
     // Finalize launching command
@@ -140,7 +151,7 @@ pub fn run() -> anyhow::Result<()> {
 
     // Game ID per Steam. Just set it in.
     for envvar in ["STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"].iter() {
-        command.env(envvar, "3513350");
+        command.env(envvar, Game::STEAM_GAME_ID.to_string());
     }
     // Env that just gets set to 1
     for envvar in [
@@ -169,6 +180,7 @@ pub fn run() -> anyhow::Result<()> {
             "dxgi.customDeviceDesc=\"NVIDIA GeForce RTX 4090\";dxgi.customDeviceId=2684;dxgi.customVendorId=10de"
         );
     }
+    // DXVK_CONFIG="dxgi.customDeviceDesc=\"NVIDIA GeForce RTX 4090\";dxgi.customDeviceId=2684;dxgi.customVendorId=10de"
 
     // Add environment flags for selected wine
     for (key, value) in features.env.into_iter() {
@@ -294,6 +306,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     child.wait()?;
+
 
     // Flush and close the game log file
     if let Ok(mut file) = game_output.lock() {

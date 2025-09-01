@@ -33,21 +33,24 @@ discord-rich-presence = { version = "0.2.3", optional = true }
 steamlocate = "2.0.1"
 microxdg = "0.2.0"
 
+sysinfo = "0.36.1"
+
 # Steam integration, sdk level
 steamworks = "0.12.1"
+gfxinfo = "0.1.2"
 
 [features]
-genshin = ["anime-game-core/genshin"]
-star-rail = ["anime-game-core/star-rail"]
-zzz = ["anime-game-core/zzz"]
-honkai = ["anime-game-core/honkai"]
-pgr = ["anime-game-core/pgr"]
-wuwa = ["anime-game-core/wuwa"]
+genshin         = [ "anime-game-core/genshin" ] #, "anime-game-core/sophon" ]
+star-rail       = [ "anime-game-core/star-rail" ]
+zzz             = [ "anime-game-core/zzz" ]
+honkai          = [ "anime-game-core/honkai" ]
+pgr             = [ "anime-game-core/pgr" ]
+wuwa            = [ "anime-game-core/wuwa" ]
 
 star-rail-patch = ["anime-game-core/patch-jadeite"]
-honkai-patch = ["anime-game-core/patch-jadeite"]
-pgr-patch = ["anime-game-core/patch-mfc140"]
-wuwa-patch = ["anime-game-core/patch-jadeite"]
+honkai-patch    = ["anime-game-core/patch-jadeite"]
+pgr-patch       = ["anime-game-core/patch-mfc140"]
+wuwa-patch      = ["anime-game-core/patch-jadeite"]
 
 # Common features
 states = []
@@ -75,5 +78,8 @@ all = [
     "fps-unlocker",
     "integrations"
 ]
+
+# Specialized
+steam = []
 
 default = ["all"]
