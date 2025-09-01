@@ -11,3 +11,6 @@ pub mod game;
 
 #[cfg(feature = "sessions")]
 pub mod sessions;
+
+#[cfg(feature = "steam")]
+pub mod steam;
