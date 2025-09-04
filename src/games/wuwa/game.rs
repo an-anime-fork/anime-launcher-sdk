@@ -45,7 +45,7 @@ fn replace_keywords(command: impl ToString, folders: &Folders) -> String {
 #[cfg(feature = "steam")]
 impl SteamGame for Game {
     const STEAM_GAME_ID: i32 = 3513350;
-    fn has_steam_game_entry(&self) -> bool { true }
+    fn has_steam_game_entry() -> bool { true }
 }
 
 /// Try to run the game
@@ -150,15 +150,17 @@ pub fn run() -> anyhow::Result<()> {
     command.arg(&bash_command);
 
     // Game ID per Steam. Just set it in.
-    for envvar in ["STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"].iter() {
-        command.env(envvar, Game::STEAM_GAME_ID.to_string());
-    }
-    // Env that just gets set to 1
-    for envvar in [
-        "STEAM_COMPAT_PROTON", // force indicate we're Proton
-        "SteamOS"              // Ask the game nicely
-    ].iter() {
-        command.env(envvar, "1");
+    if Game::was_launched_from_steam_game() {
+        for envvar in ["STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"].iter() {
+            command.env(envvar, Game::STEAM_GAME_ID.to_string());
+        }
+        // Env that just gets set to 1
+        for envvar in [
+            "STEAM_COMPAT_PROTON", // force indicate we're Proton
+            "SteamOS"              // Ask the game nicely
+        ].iter() {
+            command.env(envvar, "1");
+        }
     }
 
     // Setup environment
