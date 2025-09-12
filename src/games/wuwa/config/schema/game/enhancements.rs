@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::Value as JsonValue;
 
 use crate::config::schema_blanks::prelude::*;
+//use crate::traits::enhancementsbase::EnhancementsBase;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Enhancements {
@@ -15,6 +16,8 @@ pub struct Enhancements {
     pub force_raytrace: bool, // GPU ID override for Ray Tracing
     pub fix_launch_dialog: bool
 }
+
+//impl EnhancementsBase for Enhancements {}
 
 impl From<&JsonValue> for Enhancements {
     fn from(value: &JsonValue) -> Self {
