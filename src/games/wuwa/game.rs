@@ -45,7 +45,7 @@ fn replace_keywords(command: impl ToString, folders: &Folders) -> String {
 #[cfg(feature = "steam")]
 impl SteamGame for Game {
     const STEAM_GAME_ID: i32 = 3513350;
-    fn has_steam_game_entry() -> bool { true }
+    fn has_steam_game_entry(&self) -> bool { true }
 }
 
 /// Try to run the game
@@ -102,46 +102,43 @@ pub fn run() -> anyhow::Result<()> {
     // Prepare bash -c '<command>'
     // %command% = %bash_command% %windows_command% %launch_args%
 
-    let mut bash_command = String::new();
-    let mut windows_command = String::new();
-    let mut launch_args = String::new();
+    let mut bash_command_vec: Vec<String> = vec![];
+    let mut launch_args_vec: Vec<String> = vec![];
 
     if config.game.enhancements.gamemode {
-        bash_command += "gamemoderun ";
+        bash_command_vec.push("gamemoderun".to_string());
     }
 
     let run_command = features.command
         .map(|command| replace_keywords(command, &folders))
         .unwrap_or(format!("\"{}\"", folders.wine.join(wine.files.wine64.unwrap_or(wine.files.wine)).to_string_lossy()));
 
-    bash_command += &run_command;
-    bash_command += " ";
-
-    windows_command += &format!("\"{}\"", game_exec.to_string_lossy());
+    bash_command_vec.push(run_command);
 
     // gamescope <params> -- <command to run>
     if let Some(gamescope) = config.game.enhancements.gamescope.get_command() {
-        bash_command = format!("{gamescope} -- {bash_command}");
+        bash_command_vec.insert(0, "--".to_string());
+        bash_command_vec.insert(0, gamescope.to_string());
     }
 
     // nahhhhhhhhhhh
     if config.game.enhancements.dx11 {
-        launch_args += "-dx11 ";
+        launch_args_vec.push("-dx11".to_string());
     } else {
-        launch_args += "-dx12 ";
+        launch_args_vec.push("-dx12".to_string());
     }
 
-    // Finalize launching command
-    bash_command = match &config.game.command {
+    let windows_command = format!("\"{}\"", game_exec.to_string_lossy());
+    let bash_command = match &config.game.command {
         // Use user-given launch command
         Some(command) => replace_keywords(command, &folders)
-            .replace("%command%", &format!("{bash_command} {windows_command} {launch_args}"))
-            .replace("%bash_command%", &bash_command)
+            .replace("%command%", &format!("{} {windows_command} {}", bash_command_vec.join(" "), launch_args_vec.join(" ")))
+            .replace("%bash_command%", bash_command_vec.join(" ").as_str())
             .replace("%windows_command%", &windows_command)
-            .replace("%launch_args%", &launch_args),
+            .replace("%launch_args%", launch_args_vec.join(" ").as_str()),
 
         // Combine bash and windows parts of the command
-        None => format!("{bash_command} {windows_command} {launch_args}")
+        None => format!("{} {windows_command} {}", bash_command_vec.join(" "), launch_args_vec.join(" "))
     };
 
     let mut command = Command::new("bash");
@@ -150,14 +147,16 @@ pub fn run() -> anyhow::Result<()> {
     command.arg(&bash_command);
 
     // Game ID per Steam. Just set it in.
-    if Game::was_launched_from_steam_game() {
-        for envvar in ["STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"].iter() {
+    if config.game.was_launched_from_steam_game() && config.game.has_steam_game_entry() {
+        for envvar in [
+            "STEAM_COMPAT_APP_ID", "SteamAppId", "SteamGameId", "SteamOverlayGameId"
+        ].iter() {
             command.env(envvar, Game::STEAM_GAME_ID.to_string());
         }
         // Env that just gets set to 1
         for envvar in [
-            "STEAM_COMPAT_PROTON", // force indicate we're Proton
-            "SteamOS"              // Ask the game nicely
+            "STEAM_COMPAT_PROTON",                              // force indicate we're Proton
+            config.game.get_deck_or_steamos_env_var().as_str()  // Ask the game nicely
         ].iter() {
             command.env(envvar, "1");
         }
@@ -166,6 +165,8 @@ pub fn run() -> anyhow::Result<()> {
     // Setup environment
     command.env("WINEARCH", "win64");
     command.env("WINEDLLOVERRIDES", "KRSDKExternal.exe=d");
+
+    //common::generic_wine_checks()
 
     // Vulkan accelerated capture layer
     if config.game.enhancements.obs_vkcapture {
@@ -182,14 +183,13 @@ pub fn run() -> anyhow::Result<()> {
             "dxgi.customDeviceDesc=\"NVIDIA GeForce RTX 4090\";dxgi.customDeviceId=2684;dxgi.customVendorId=10de"
         );
     }
-    // DXVK_CONFIG="dxgi.customDeviceDesc=\"NVIDIA GeForce RTX 4090\";dxgi.customDeviceId=2684;dxgi.customVendorId=10de"
 
     // Add environment flags for selected wine
     for (key, value) in features.env.into_iter() {
         command.env(key, replace_keywords(value, &folders));
     }
 
-    // Add environment flags for selected dxvk
+    // Add environment flags for selected dxvk, if used downstream
     if let Ok(Some(dxvk)) = config.get_selected_dxvk() {
         if let Ok(Some(features)) = dxvk.features(&config.components.path) {
             for (key, value) in features.env.iter() {

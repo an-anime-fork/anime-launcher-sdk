@@ -51,14 +51,7 @@ pub fn is_install_managed_by_steam() -> bool {
     }
 }
 
-fn is_steam_deck_gpu( device_gpu: u32 ) -> bool {
-    if device_gpu == 0x1435 {
-        return true;
-    }
-    false
-}
-
-pub fn hwcheck_is_deck() -> bool {
+pub fn hwcheck_is_deck_device() -> bool {
     match gfxinfo::active_gpu() {
         Ok(gpu) => {
             tracing::info!( "gpuinfo || family {} :: vendor {} :: model {} :: did {:x?}",
@@ -91,10 +84,7 @@ pub fn steam_managed_installed_game() -> Option<String> {
 pub fn steam_managed_game_install_executable() -> Option<PathBuf> {
     let args = std::env::args().collect::<Vec<_>>();
     for a in args {
-        tracing::debug!(
-            "Arg {:?}",
-            a.trim().to_string()
-        );
+        tracing::debug!( "Arg {:?}", a.trim().to_string() );
         if a.ends_with(".exe") {
             return Some(a.into());
         }
@@ -109,16 +99,18 @@ pub fn aagl_launcher_launch_dir() -> Option<std::io::Result<PathBuf>> {
     }
 }
 
-pub fn aagl_launcher_launch_target() -> Option<OsString> {
+pub fn game_launcher_target() -> Option<OsString> {
     match launched_from() {
         LaunchedFrom::Steam => {
             match std::env::args().any(|arg| arg.starts_with("--launch-command")) {
                 false => None,
-                true => Some(env::args()
-                            .filter(|arg| arg.starts_with("--launch-command="))
-                            .collect::<Vec<String>>()[0]
-                            .split("=")
-                            .collect::<Vec<&str>>()[1].into())
+                true => Some(
+                    env::args()
+                        .filter(|arg| arg.starts_with("--launch-command="))
+                        .collect::<Vec<String>>()[0]
+                        .split("=")
+                        .collect::<Vec<&str>>()[1].into()
+                )
             }
         },
         LaunchedFrom::Independent => None
@@ -146,7 +138,7 @@ pub fn launched_from_steam() -> bool {
 
 /// Identify whether we are running on Steam Deck.
 pub fn is_steam_deck() -> bool {
-    check_env_var_for_val("SteamDeck", "1")
+    check_env_var_for_val("SteamDeck", "1") && hwcheck_is_deck_device()
 }
 
 /// Identify whether we were launched through a SteamOS environment.
@@ -254,6 +246,7 @@ fn filter_local_roots_by_proton_launcher() -> Option<Vec<PathBuf>> {
     Some(_processed)
 }
 
+// This is a horrible split and I need to rustify it properly.
 fn get_split_names(path: PathBuf) -> (Option<String>, Option<String>) {
     match fs::read_to_string(path.join("version")).expect(
         format!("Should have been able to read the file for {0}", path.display()).as_str()

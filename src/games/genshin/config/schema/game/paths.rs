@@ -62,7 +62,7 @@ impl Default for Paths {
 impl From<&JsonValue> for Paths {
     fn from(value: &JsonValue) -> Self {
         let default = Self::default();
-        match steam::aagl_launcher_launch_target() {
+        match steam::game_launcher_target() {
             None => Self {
                 global: value.get("global")
                     .and_then(JsonValue::as_str)

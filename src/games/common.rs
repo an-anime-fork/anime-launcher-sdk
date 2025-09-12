@@ -20,3 +20,7 @@ pub fn base_install_dir(launcher_dir: PathBuf) -> anyhow::Result<PathBuf> {
         }
     }
 }
+
+pub fn generic_wine_checks() {
+    
+}
