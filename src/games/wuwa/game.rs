@@ -76,9 +76,6 @@ pub fn run() -> anyhow::Result<()> {
     let features = wine.features(&config.components.path)?.unwrap_or_default();
 
     let mut folders = Folders {
-        /*wine: config.game.wine.builds.join(&wine.name),
-        prefix: config.game.wine.prefix.clone(),
-        */
         wine: wine.get_runner_dir(config.game.wine.builds.clone()),
         prefix: wine.get_prefix_dir(config.game.wine.prefix.clone()),
         game: PathBuf::from(game_path),
