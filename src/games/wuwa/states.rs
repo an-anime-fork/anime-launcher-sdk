@@ -18,36 +18,17 @@ use crate::integrations::steam::LaunchedFrom;
 pub enum LauncherState {
     Launch,
 
-    /*
-    PatchNotVerified,
-    PatchBroken,
-    PatchUnsafe,
-    PatchConcerning,
-
-    PatchNotInstalled,
-    PatchUpdateAvailable,
-    */
-
     // Todo: yeet this and replace with Proton select
     #[cfg(feature = "components")]
     WineNotInstalled,
 
     PrefixNotExists,
-
-    //TelemetryNotDisabled,
-
-    // Always contains `VersionDiff::Diff`
-    // GameUpdateAvailable(VersionDiff),
-
-    // Always contains `VersionDiff::NotInstalled`
-    // GameNotInstalled(VersionDiff)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StateUpdating {
     Components,
     Game,
-    //Patch
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,7 +37,6 @@ pub struct LauncherStateParams<F: Fn(StateUpdating)> {
     pub game_edition: GameEdition,
 
     pub wine_prefix: PathBuf,
-    //pub patch_folder: PathBuf,
 
     pub fast_verify: bool,
     pub status_updater: F
@@ -69,45 +49,6 @@ impl LauncherState {
         // Check wine components installation status
         (params.status_updater)(StateUpdating::Components);
 
-        // Check prefix existence
-        //if !params.wine_prefix.join("drive_c").exists() {
-        //    return Ok(Self::PrefixNotExists);
-        //}
-
-        /*
-        // Check game patch status
-        (params.status_updater)(StateUpdating::Patch);
-
-        // Check jadeite patch status
-        if !jadeite::is_installed(&params.patch_folder) {
-            return Ok(Self::PatchNotInstalled);
-        }
-
-        // Fetch patch metadata
-        let metadata = jadeite::get_metadata()?;
-
-        if metadata.jadeite.version > jadeite::get_version(params.patch_folder)? {
-            return Ok(Self::PatchUpdateAvailable);
-        }
-
-        // Check telemetry servers
-        let disabled = telemetry::is_disabled(params.game_edition)
-
-            // Return true if there's no domain name resolved, or false otherwise
-            .map(|result| result.is_none())
-
-            // And return true if there's an error happened during domain name resolving
-            // FIXME: might not be a good idea? Idk
-            .unwrap_or_else(|err| {
-                tracing::warn!("Failed to check telemetry servers: {err}. Assuming they're disabled");
-
-                true
-            });
-
-        if !disabled {
-            return Ok(Self::TelemetryNotDisabled);
-        }
-        */
         // Check game installation status
         (params.status_updater)(StateUpdating::Game);
 
@@ -116,29 +57,6 @@ impl LauncherState {
 
         // TODO: wine selection check?
         return Ok(Self::Launch);
-
-        /*
-        let diff = game.try_get_diff()?;
-
-        match diff {
-            VersionDiff::Latest( version, .. ) => {
-                // Request current patch status from the metadata file
-                let patch = metadata.games.wuwa
-                    .for_edition(params.game_edition)
-                    .get_status(version);
-
-                match patch {
-                    JadeitePatchStatusVariant::Verified   => Ok(Self::Launch),
-                    JadeitePatchStatusVariant::Unverified => Ok(Self::PatchNotVerified),
-                    JadeitePatchStatusVariant::Broken     => Ok(Self::PatchBroken),
-                    JadeitePatchStatusVariant::Unsafe     => Ok(Self::PatchUnsafe),
-                    JadeitePatchStatusVariant::Concerning => Ok(Self::PatchConcerning)
-                }
-            },
-            VersionDiff::Outdated { .. } => Ok(Self::GameUpdateAvailable(diff)),
-            VersionDiff::NotInstalled { .. } => Ok(Self::GameNotInstalled(diff))
-        }
-        */
     }
 
     #[cfg(feature = "config")]
@@ -200,7 +118,6 @@ impl LauncherState {
             game_edition: config.launcher.edition,
 
             wine_prefix: config.get_wine_prefix_path(),
-            //patch_folder: config.patch.path,
 
             fast_verify: config.launcher.repairer.fast,
 
