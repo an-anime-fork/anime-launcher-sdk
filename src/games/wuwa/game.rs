@@ -119,11 +119,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     // nahhhhhhhhhhh
-    if config.game.enhancements.dx11 {
-        launch_args_vec.push("-dx11".to_string());
-    } else {
-        launch_args_vec.push("-dx12".to_string());
-    }
+    launch_args_vec.push((if config.game.enhancements.dx11 {"-dx11"} else {"-dx12"} ).into());
 
     let windows_command = format!("\"{}\"", game_exec.to_string_lossy());
     let bash_command = match &config.game.command {
@@ -214,7 +210,9 @@ pub fn run() -> anyhow::Result<()> {
 
     let variables = command
         .get_envs()
-        .map(|(key, value)| format!("{}=\"{}\"", key.to_string_lossy(), value.unwrap_or_default().to_string_lossy()))
+        .map(|(key, value)| {
+            format!("{}=\"{}\"", key.to_string_lossy(), value.unwrap_or_default().to_string_lossy())
+        })
         .fold(String::new(), |acc, env| acc + " " + &env);
 
     tracing::info!("Running the game with command: {variables} {bash_command}");
@@ -315,11 +313,15 @@ pub fn run() -> anyhow::Result<()> {
     drop(game_output);
 
     if let Some(join) = stdout_join {
-        join.join().map_err(|err| anyhow::anyhow!("Failed to join stdout reader thread: {err:?}"))??;
+        join.join().map_err(|err| {
+            anyhow::anyhow!("Failed to join stdout reader thread: {err:?}") }
+        )??;
     }
 
     if let Some(join) = stderr_join {
-        join.join().map_err(|err| anyhow::anyhow!("Failed to join stderr reader thread: {err:?}"))??;
+        join.join().map_err(|err| {
+            anyhow::anyhow!("Failed to join stderr reader thread: {err:?}") }
+        )??;
     }
 
     // Workaround for fast process closing (is it still a thing?)
