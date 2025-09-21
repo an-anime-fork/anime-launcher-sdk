@@ -18,7 +18,6 @@ pub struct Enhancements {
 }
 
 //impl EnhancementsBase for Enhancements {}
-
 impl From<&JsonValue> for Enhancements {
     fn from(value: &JsonValue) -> Self {
         let default = Self::default();

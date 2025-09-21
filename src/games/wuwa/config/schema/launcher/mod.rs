@@ -36,6 +36,7 @@ impl Default for LauncherStyle {
 pub enum LauncherBehavior {
     Nothing,
     Hide,
+
     Close
 }
 

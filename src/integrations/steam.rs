@@ -62,16 +62,22 @@ pub fn hwcheck_is_deck_device() -> bool {
             );
             gpu.vendor() == "AMD" && *gpu.device_id() == 0x1435 // This is the combo for Steam Deck
         }
-        Err(e) => {
+        Err(_) => {
             false
         }
     }
 }
 
 pub fn is_in_steam_startup_phase() -> bool {
-    let steam_launch = env::var("SteamClientLaunch");
-    let steam_user = env::var("SteamUser");
-    (steam_user.is_ok() && (steam_launch.is_err() || !(steam_launch.unwrap() == "1")))
+    match env::var("SteamUser") {
+        Ok(_) => {
+            match env::var("SteamClientLaunch") {
+                Ok(value) => !(value == "1"),
+                Err(_) => true
+            }
+        },
+        Err(_) => false
+    }
 }
 
 pub fn steam_managed_installed_game() -> Option<String> {
@@ -118,10 +124,10 @@ pub fn game_launcher_target() -> Option<OsString> {
 }
 
 pub fn launched_from() -> LaunchedFrom {
-    if environment() == Steam::Invalid {
-        return LaunchedFrom::Independent;
+    match environment() == Steam::Invalid {
+        true => LaunchedFrom::Independent,
+        false => LaunchedFrom::Steam
     }
-    LaunchedFrom::Steam
 }
 
 fn check_env_var_for_val(env_var_key: &str, expected_value: &str) -> bool {
@@ -188,7 +194,7 @@ pub fn get_steam_compatdata_cdrive_root() -> Option<String> {
 fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
     // initialize and let Steam seed itself.
     match SteamDir::locate() {
-        Ok(mut steam_install_dir) => {
+        Ok(steam_install_dir) => {
             Some(steam_install_dir.library_paths().unwrap()
                 .clone()
                 .into_iter()
