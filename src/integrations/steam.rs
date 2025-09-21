@@ -192,7 +192,9 @@ fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
             Some(steam_install_dir.library_paths().unwrap()
                 .clone()
                 .into_iter()
-                .map(|single_path| single_path.join("steamapps").join("common"))
+                .map(|single_path| {
+                    single_path.join("steamapps").join("common") }
+                )
                 .chain(
                     [steam_install_dir.path().join("compatibilitytools.d")]
                         .to_vec()
@@ -207,9 +209,9 @@ fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
 
 fn check_pld(_ld: PathBuf) -> Option<PathBuf> {
     let pld = PathBuf::from(_ld);
-    match pld.is_dir() // is it a directory that contains things
-            && !pld.is_symlink() // is it NOT a symlink (don't inventory doppelgangers)
-            && pld.join("proton").exists() // does the directory contain a proton launch script/file?
+    match pld.is_dir()                          // is it a directory that contains things
+            && !pld.is_symlink()                // eval symlinkness (don't inventory doppelgangers)
+            && pld.join("proton").exists() // does the directory contain proton launch utils?
     {
         true => Some(pld),
         false => None
@@ -251,22 +253,15 @@ fn get_split_names(path: PathBuf) -> (Option<String>, Option<String>) {
     match fs::read_to_string(path.join("version")).expect(
         format!("Should have been able to read the file for {0}", path.display()).as_str()
     ).split_once(" ") {
-        Some((_sz, proton_name)) => {
+        Some((_, proton_name)) => {
             match proton_name.is_empty() {
                 false => {
                     match path.file_name() {
                         Some(file_path) => match file_path.to_str() {
-                            Some(path_name) => {
-                                tracing::debug!(
-                                    "Identified {:?} {:?}",
-                                    path_name.trim().to_string(),
-                                    proton_name.trim().to_string()
-                                );
-                                (
-                                    Some(path_name.trim().to_string()),
-                                    Some(proton_name.trim().to_string())
-                                )
-                            },
+                            Some(path_name) => {(
+                                Some(path_name.trim().to_string()),
+                                Some(proton_name.trim().to_string())
+                            )},
                             None => (None, None)
                         },
                         None => (None, None)
@@ -303,16 +298,17 @@ pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Gr
             let mut wines: Vec<components::wine::Version> = Vec::new();
             for path in paths {
                 let (_wine_title, _wine_name) = get_split_names(path.clone());
+                tracing::debug!("Identified {:?} {:?}",_wine_title, _wine_name);
                 match _wine_name {
                     Some(wine_name)=> match _wine_title {
                         Some(wine_title)=> {
                             // Let's gooooo!
                             wines.push(components::wine::Version {
-                                name: wine_name,   // clarify
-                                title: wine_title,  // clarify
-                                uri: (&path.to_str().unwrap()).trim().to_string(), // clarify?
+                                name: wine_name,                                    // clarify
+                                title: wine_title,                                  // clarify
+                                uri: (&path.to_str().unwrap()).trim().to_string(),  // clarify?
                                 format: None,
-                                files: components::wine::Files { // handled by wincompatlib
+                                files: components::wine::Files {                    // wincompatlib
                                     wine: "proton".to_string(),
                                     wine64: None,
                                     wineserver: None,
