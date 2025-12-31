@@ -1,12 +1,19 @@
+use std::path::PathBuf;
+
 use serde::{Serialize, Deserialize};
 use serde_json::Value as JsonValue;
+
+use wincompatlib::prelude::*;
 
 #[cfg(feature = "sandbox")]
 use crate::config::schema_blanks::sandbox::Sandbox;
 
 #[cfg(feature = "components")]
 use crate::components::{
-    wine::Version as WineVersion,
+    wine::{
+        UnifiedWine,
+        Version as WineVersion
+    },
     dxvk::Version as DxvkVersion
 };
 
@@ -95,5 +102,27 @@ impl Schema {
             Some(version) => DxvkVersion::find_in(&self.components.path, version),
             None => Ok(None)
         }
+    }
+
+    #[cfg(feature = "components")]
+    /// Resolve real wine prefix path using wincompatlib
+    /// 
+    /// - For general wine build returns `game.wine.prefix`
+    /// - For proton-like builds return `game.wine.prefix`/`pfx`
+    pub fn get_wine_prefix_path(&self) -> PathBuf {
+        if let Ok(Some(wine)) = self.get_selected_wine() {
+            let wine = wine
+                .to_wine(&self.components.path, Some(&self.game.wine.builds.join(&wine.name)))
+                .with_prefix(&self.game.wine.prefix);
+
+            let prefix = match wine {
+                UnifiedWine::Default(wine) => wine.prefix,
+                UnifiedWine::Proton(proton) => proton.wine().prefix.clone()
+            };
+
+            return prefix;
+        }
+
+        self.game.wine.prefix.clone()
     }
 }

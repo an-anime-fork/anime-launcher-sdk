@@ -9,6 +9,8 @@ use anime_game_core::prelude::*;
 use anime_game_core::zzz::telemetry;
 use anime_game_core::zzz::game::Game;
 
+use crate::components::wine::Bundle as WineBundle;
+
 use crate::config::ConfigExt;
 use crate::zzz::config::Config;
 
@@ -90,12 +92,14 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     // Prepare wine prefix drives
-    config.game.wine.drives.map_folders(&folders.game, &config.game.wine.prefix)?;
+    let prefix_folder = config.get_wine_prefix_path();
+
+    config.game.wine.drives.map_folders(&folders.game, &prefix_folder)?;
 
     // Workaround for sandboxing feature
     if config.sandbox.enabled {
-        WineDrives::map_folder(&config.game.wine.prefix, AllowedDrives::C, "../drive_c")?;
-        WineDrives::map_folder(&config.game.wine.prefix, AllowedDrives::Z, "/")?;
+        WineDrives::map_folder(&prefix_folder, AllowedDrives::C, "../drive_c")?;
+        WineDrives::map_folder(&prefix_folder, AllowedDrives::Z, "/")?;
     }
 
     // Prepare bash -c '<command>'
@@ -135,6 +139,14 @@ pub fn run() -> anyhow::Result<()> {
     // gamescope <params> -- <command to run>
     if let Some(gamescope) = config.game.enhancements.gamescope.get_command() {
         bash_command = format!("{gamescope} -- {bash_command}");
+    }
+
+    // Bundle all windows arguments used to run the game into a single file
+    if features.compact_launch {
+        std::fs::write(folders.game.join("compact_launch.bat"), format!("start {windows_command} {launch_args}\nexit"))?;
+
+        windows_command = String::from("compact_launch.bat");
+        launch_args = String::new();
     }
 
     // bwrap <params> -- <command to run>
@@ -200,7 +212,11 @@ pub fn run() -> anyhow::Result<()> {
         }
     }
 
-    let wine_folder = folders.wine.clone();
+    let mut wine_folder = folders.wine.clone();
+
+    if features.bundle == Some(WineBundle::Proton) {
+        wine_folder.push("files");
+    }
 
     command.envs(config.game.enhancements.hud.get_env_vars(config.game.enhancements.gamescope.enabled));
     command.envs(config.game.enhancements.fsr.get_env_vars());
@@ -213,7 +229,7 @@ pub fn run() -> anyhow::Result<()> {
 
     #[cfg(feature = "sessions")]
     if let Some(current) = Sessions::get_current()? {
-        Sessions::apply(current, &config.game.wine.prefix)?;
+        Sessions::apply(current, config.get_wine_prefix_path())?;
     }
 
     // Run command
@@ -341,7 +357,7 @@ pub fn run() -> anyhow::Result<()> {
 
     #[cfg(feature = "sessions")]
     if let Some(current) = Sessions::get_current()? {
-        Sessions::update(current, &config.game.wine.prefix)?;
+        Sessions::update(current, config.get_wine_prefix_path())?;
     }
 
     Ok(())
