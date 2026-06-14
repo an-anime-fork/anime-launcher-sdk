@@ -281,6 +281,8 @@ fn get_steam_compat_path() -> Option<String> {
     }
 }
 
+pub fn get_steamrt_installs() -> anyhow::Result<Vec<components::steamrt::Group>> {}
+
 /// Generate a list of WinCompatLib Structs for inventoried Steam-managed, detected Proton installs
 pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Group>> {
     match filter_local_roots_by_proton_launcher() {

@@ -336,5 +336,13 @@ pub fn run() -> anyhow::Result<()> {
         }
     }
 
+    let ret_status = child.wait()?;
+
+    // Encountered codes:
+    //  - 0 (standard exit)
+    //  - ? (patched?)
+    //  - ? (anticheat crashout)
+    tracing::info!("{}", &format!("Known exit code: {}", ret_status.code().unwrap_or(-1)));
+
     Ok(())
 }

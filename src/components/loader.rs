@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use crate::anime_game_core::traits::git_sync::RemoteGitSyncExt;
 
 use super::wine;
+use super::steamrt;
 use super::dxvk;
 
 use crate::integrations::steam;
@@ -11,6 +12,13 @@ pub fn get_local_proton_versions(index: &Path) -> anyhow::Result<Vec<wine::Group
     match steam::get_proton_installs_as_wines() {
         Ok(winegroups) => Ok(winegroups),
         Err(_) => get_wine_versions(index)
+    }
+}
+
+pub fn get_local_steamrt_versions(index: &Path) -> anyhow::Result<Vec<steamrt::Group>> {
+    match steam::get_steamrt_installs() {
+        Ok(steamrtgroups) => Ok(steamrtgroups),
+        Err(_) => tracing::debug!("no steamrt installs found"),
     }
 }
 

@@ -10,6 +10,7 @@ pub struct Enhancements {
     pub gamemode: bool,
     pub hud: HUD,
     pub gamescope: Gamescope,
+    pub steamrt: bool, // Steam Runtime active. Default to true.
     pub dx11: bool, // choice?
     pub xalia: bool, // Xalia glyphs
     pub obs_vkcapture: bool, // OBS Vulkan capture layer
@@ -41,6 +42,10 @@ impl From<&JsonValue> for Enhancements {
             gamescope: value.get("gamescope")
                 .map(Gamescope::from)
                 .unwrap_or(default.gamescope),
+
+            steamrt: value.get("steamrt")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(true),
 
             xalia: value.get("xalia")
                 .and_then(JsonValue::as_bool)
