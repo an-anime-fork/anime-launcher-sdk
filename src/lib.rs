@@ -23,6 +23,9 @@ pub use games::pgr;
 #[cfg(feature = "wuwa")]
 pub use games::wuwa;
 
+#[cfg(feature = "piston")]
+pub use games::steamgame;
+
 #[cfg(feature = "integrations")]
 pub mod integrations;
 

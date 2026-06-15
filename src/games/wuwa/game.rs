@@ -342,7 +342,6 @@ pub fn run() -> anyhow::Result<()> {
     //  - 0 (standard exit)
     //  - ? (patched?)
     //  - ? (anticheat crashout)
-    tracing::info!("{}", &format!("Known exit code: {}", ret_status.code().unwrap_or(-1)));
-
+    tracing::info!("{}", format!("Exit code logging: {}",  child.wait()?.code().unwrap()));
     Ok(())
 }
