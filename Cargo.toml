@@ -29,7 +29,7 @@ wincompatlib = { version = "0.7.7", features = ["all"], optional = true }
 lazy_static = { version = "1.5.0", optional = true }
 md-5 = { version = "0.10.6", features = ["asm"], optional = true }
 discord-rich-presence = { version = "1", optional = true }
-steamlocate = "2.0.1"
+steamlocate = "2.1.0"
 microxdg = "0.2.0"
 
 sysinfo = "0.38"

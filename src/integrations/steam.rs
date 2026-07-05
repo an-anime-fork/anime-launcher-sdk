@@ -207,11 +207,39 @@ fn get_steam_search_roots() -> Option<Vec<PathBuf>> {
     }
 }
 
+fn get_steamrt_search_roots() -> Option<Vec<PathBuf>> {
+    // initialize and let Steam seed itself.
+    match SteamDir::locate() {
+        Ok(mut steam_install_dir) => {
+            Some(steam_install_dir.library_paths().unwrap()
+                .clone()
+                .into_iter()
+                .map(|single_path| {
+                    single_path.join("steamapps").join("common") }
+                )
+                .collect::<Vec<PathBuf>>()
+            )
+        }
+        Err(_) => None
+    }
+}
+
 fn check_pld(_ld: PathBuf) -> Option<PathBuf> {
     let pld = PathBuf::from(_ld);
     match pld.is_dir()                          // is it a directory that contains things
             && !pld.is_symlink()                // eval symlinkness (don't inventory doppelgangers)
             && pld.join("proton").exists() // does the directory contain proton launch utils?
+    {
+        true => Some(pld),
+        false => None
+    }
+}
+
+fn check_srt(_ld: PathBuf) -> Option<PathBuf> {
+    let pld = PathBuf::from(_ld);
+    match pld.is_dir()                          // is it a directory that contains things
+        && !pld.is_symlink()                    // eval symlinkness (don't inventory doppelgangers)
+        && pld.join("_v2-entry-point").exists()    // does the directory contain proton launch utils?
     {
         true => Some(pld),
         false => None
@@ -231,6 +259,19 @@ fn check_root(local: PathBuf) -> Option<Vec<PathBuf>> {
     Some(processed)
 }
 
+fn check_steamrt_root(local: PathBuf) -> Option<Vec<PathBuf>> {
+    let mut processed: Vec<PathBuf> = Vec::new();
+    if local.exists() && local.is_dir() {
+        for _ld in local.read_dir().unwrap() {
+            match check_srt(_ld.unwrap().path()) {
+                Some(_pld) => processed.push(_pld),
+                None => {}
+            }
+        }
+    }
+    Some(processed)
+}
+
 /// Inventory all possible Proton launchers in search roots.
 fn filter_local_roots_by_proton_launcher() -> Option<Vec<PathBuf>> {
     let mut _processed: Vec<PathBuf> = Vec::new();
@@ -239,6 +280,23 @@ fn filter_local_roots_by_proton_launcher() -> Option<Vec<PathBuf>> {
         Some(_locals) => {
             for _local in _locals {
                 match check_root(_local) {
+                    Some(_root) => _processed.extend(_root),
+                    None => {}
+                }
+            }
+        }
+    }
+    Some(_processed)
+}
+
+/// Inventory all possible Proton launchers in search roots.
+fn filter_local_roots_by_steamrt() -> Option<Vec<PathBuf>> {
+    let mut _processed: Vec<PathBuf> = Vec::new();
+    match get_steam_search_roots() {
+        None => { },
+        Some(_locals) => {
+            for _local in _locals {
+                match check_steamrt_root(_local) {
                     Some(_root) => _processed.extend(_root),
                     None => {}
                 }
@@ -281,7 +339,41 @@ fn get_steam_compat_path() -> Option<String> {
     }
 }
 
-pub fn get_steamrt_installs() -> anyhow::Result<Vec<components::steamrt::Group>> {}
+pub fn get_steamrt_installs() -> anyhow::Result<Vec<components::steamrt::Group>> {
+    match filter_local_roots_by_steamrt() {
+        Some(paths) => {
+            let mut runtimes: Vec<components::steamrt::Version> = Vec::new();
+            for path in paths {
+                let (_rt_title, _rt_name) = get_split_names(path.clone());
+                tracing::debug!("Identified {:?} {:?}",_rt_title, _rt_name);
+                match _rt_name {
+                    Some(rt_name)=> match _rt_title {
+                        Some(rt_title)=> {
+                            // Let's gooooo!
+                            runtimes.push(components::steamrt::Version {
+                                name: rt_name,
+                                files: components::steamrt::Files {
+                                    run: "run".to_string(),
+                                    manifest: "toolmanifest.vdf".to_string(),
+                                },
+                            });
+                        },
+                        None => continue
+                    },
+                    None => continue
+                }
+            }
+            Ok([
+                components::steamrt::Group {
+                    name:"steam-runtimes".to_string(),
+                    title:"Steam Runtime engines".to_string(),
+                    versions: runtimes,
+                }
+            ].to_vec())
+        },
+        None => Err(anyhow::anyhow!("Steam mode active but no runtimes available?"))
+    }
+}
 
 /// Generate a list of WinCompatLib Structs for inventoried Steam-managed, detected Proton installs
 pub fn get_proton_installs_as_wines() -> anyhow::Result<Vec<components::wine::Group>> {

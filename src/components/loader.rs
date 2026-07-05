@@ -18,7 +18,7 @@ pub fn get_local_proton_versions(index: &Path) -> anyhow::Result<Vec<wine::Group
 pub fn get_local_steamrt_versions(index: &Path) -> anyhow::Result<Vec<steamrt::Group>> {
     match steam::get_steamrt_installs() {
         Ok(steamrtgroups) => Ok(steamrtgroups),
-        Err(_) => tracing::debug!("no steamrt installs found"),
+        Err(_) => anyhow::bail!("no steamrt installs found"),
     }
 }
 
@@ -195,6 +195,13 @@ impl ComponentsLoader {
             steam::LaunchedFrom::Steam => get_local_proton_versions(&self.folder),
             steam::LaunchedFrom::Independent => get_wine_versions(&self.folder)
         }
+    }
+
+    #[inline]
+    #[tracing::instrument(level = "debug")]
+    /// Try to get wine versions from components index
+    pub fn get_steamrt_versions(&self) -> anyhow::Result<Vec<steamrt::Group>> {
+        get_local_steamrt_versions(&self.folder)
     }
 
     #[inline]
